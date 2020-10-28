@@ -152,12 +152,7 @@ class ArgInfo(object):
             return None
         if isinstance(self.default, Enum):
             return self.default.name
-        value = unic(self.default)
-        if not is_unicode(self.default):
-            return value
-        for target, replace in (("\\", "\\\\"), ("\n", "\\n"), ("\t", "\\t"), ("\r", "\\r")):
-                value = value.replace(target, replace)
-        return re.sub('^(?= )|(?<= )$|(?<= )(?= )', r'\\', value)
+        return unic(self.default)
 
     def _format_enum(self, enum):
         try:
