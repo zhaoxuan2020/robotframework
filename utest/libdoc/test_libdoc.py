@@ -248,7 +248,7 @@ class TestKeywordDoc(unittest.TestCase):
         assert_equal(arg_info.default_repr, expected)
 
     def test_keyword_doc_default_value_robot_espaces(self):
-        self._verify("\n\n HELLO     foo\t\t'", "\\n\\n HELLO \\ \\ \\ \\ foo\\t\\t'")
+        self._verify(u"\n\n HELLO     foo\t\t'", "\\n\\n HELLO \\ \\ \\ \\ foo\\t\\t'")
 
     def test_keyword_doc_default_value_integer(self):
         self._verify(3, "3")
