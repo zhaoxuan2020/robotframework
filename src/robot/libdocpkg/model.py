@@ -17,7 +17,7 @@ from itertools import chain
 import re
 
 from robot.model import Tags
-from robot.utils import getshortdoc, get_timestamp, Sortable, setter, unicode, is_unicode
+from robot.utils import getshortdoc, get_timestamp, Sortable, setter, unicode
 
 from .htmlutils import HtmlToText, DocFormatter
 from .writer import LibdocWriter
