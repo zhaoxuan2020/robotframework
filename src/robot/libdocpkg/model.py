@@ -12,12 +12,20 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-
+from collections import OrderedDict
+from copy import copy
+from inspect import isclass
 from itertools import chain
 import re
+from enum import Enum
+try:
+    import typing_extensions
+    from typing import TypedDict
+except ImportError:
+    pass
 
 from robot.model import Tags
-from robot.utils import getshortdoc, get_timestamp, Sortable, setter, unicode, unic
+from robot.utils import getshortdoc, get_timestamp, Sortable, setter, unicode, unic, PY3
 
 from .htmlutils import HtmlToText, DocFormatter
 from .writer import LibdocWriter
@@ -39,6 +47,7 @@ class LibraryDoc(object):
         self.lineno = lineno
         self.inits = []
         self.keywords = []
+        self.types = set()
 
     @property
     def doc(self):
@@ -106,8 +115,38 @@ class LibraryDoc(object):
             'inits': [init.to_dictionary() for init in self.inits],
             'keywords': [kw.to_dictionary() for kw in self.keywords],
             'generated': get_timestamp(daysep='-', millissep=None),
-            'all_tags': tuple(self.all_tags)
+            'all_tags': tuple(self.all_tags),
+            'data_types': self._types_as_dict()
         }
+
+    def _types_as_dict(self):
+        types = list()
+        type_names = OrderedDict(sorted(self.types, key=lambda tup: tup[0]))
+        for type in type_names.values():
+            if isclass(type):
+                if issubclass(type, Enum):
+                    enum = dict()
+                    enum['name'] = type.__name__
+                    enum['super'] = 'Enum'
+                    enum['doc'] = type.__doc__
+                    members = list()
+                    for name, member in type._member_map_.items():
+                        members.append({'name': name, 'value': member.value})
+                    enum['members'] = members
+                    types.append(enum)
+                elif PY3 and isinstance(type, typing_extensions._TypedDictMeta):
+                    typed_dict = dict()
+                    typed_dict['name'] = type.__name__
+                    typed_dict['super'] = 'TypedDict'
+                    typed_dict['doc'] = type.__doc__
+                    items = type.__annotations__
+                    for key, value in items.items():
+                        items[key] = value.__name__ if isclass(value) else unic(value)
+                    typed_dict['items'] = items
+                    types.append(typed_dict)
+                else:
+                    types.append(type.__name__)
+        return types
 
 
 class KeywordDoc(Sortable):
@@ -122,6 +161,7 @@ class KeywordDoc(Sortable):
         self.source = source
         self.lineno = lineno
         self.parent = parent
+
 
     @property
     def shortdoc(self):
@@ -163,6 +203,7 @@ class KeywordDoc(Sortable):
         }
 
     def _convert_arguments(self):
+        self.parent.types.update([(arg.type_repr, arg.type) for arg in self.args if arg.type_repr])
         return [{'name': a.name,
                  'type': a.type_repr,
                  'default': a.default_repr,
