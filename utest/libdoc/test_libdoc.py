@@ -2,6 +2,7 @@ import unittest
 import json
 from os import path
 
+from robot.running.arguments import ArgInfo
 from robot.utils import PY3, IRONPYTHON, JYTHON
 from robot.utils.asserts import assert_equal
 from robot.libdocpkg import LibraryDocumentation
@@ -238,3 +239,22 @@ class TestLibdocJsonBuilder(unittest.TestCase):
         libspec['generated'] = None
         org_libspec['generated'] = None
         assert_equal(libspec, org_libspec)
+
+
+class TestKeywordDoc(unittest.TestCase):
+
+    def _verify(self, default, expected):
+        arg_info = ArgInfo(ArgInfo.POSITIONAL_OR_NAMED, default=default)
+        assert_equal(arg_info.default_repr, expected)
+
+    def test_keyword_doc_default_value_robot_espaces(self):
+        self._verify("\n\n HELLO     foo\t\t'", "\\n\\n HELLO \\ \\ \\ \\ foo\\t\\t'")
+
+    def test_keyword_doc_default_value_integer(self):
+        self._verify(3, "3")
+
+    def test_keyword_doc_default_value_none(self):
+        self._verify(None, "None")
+
+    def test_keyword_doc_default_value_non_ascii(self):
+        self._verify(u'\xe4  FOO\n', u'\xe4 \ FOO\\n')

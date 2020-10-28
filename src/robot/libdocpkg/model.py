@@ -162,17 +162,10 @@ class KeywordDoc(Sortable):
             'lineno': self.lineno
         }
 
-    def _argument_default_repr(self, value):
-        if is_unicode(value):
-            for target, replace in (("\\", "\\\\"), ("\n", "\\n"), ("\t", "\\t"), ("\r", "\\r")):
-                value = value.replace(target, replace)
-            return re.sub('^(?= )|(?<= )$|(?<= )(?= )', r'\\', value)
-        return value
-
     def _convert_arguments(self):
         return [{'name': a.name,
                  'type': a.type_repr,
-                 'default': self._argument_default_repr(a.default_repr),
+                 'default': a.default_repr,
                  'kind': a.kind,
                  'required': a.required,
                  'repr': unicode(a)

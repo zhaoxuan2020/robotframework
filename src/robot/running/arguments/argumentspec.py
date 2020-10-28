@@ -12,7 +12,7 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-
+import re
 from inspect import isclass
 import sys
 try:
@@ -21,7 +21,7 @@ except ImportError:    # Standard in Py 3.4+ but can be separately installed
     class Enum(object):
         pass
 
-from robot.utils import setter, py2to3, unicode, unic
+from robot.utils import setter, py2to3, unicode, unic, is_unicode
 
 from .argumentconverter import ArgumentConverter
 from .argumentmapper import ArgumentMapper
@@ -152,7 +152,12 @@ class ArgInfo(object):
             return None
         if isinstance(self.default, Enum):
             return self.default.name
-        return unic(self.default)
+        value = unic(self.default)
+        if not is_unicode(self.default):
+            return value
+        for target, replace in (("\\", "\\\\"), ("\n", "\\n"), ("\t", "\\t"), ("\r", "\\r")):
+                value = value.replace(target, replace)
+        return re.sub('^(?= )|(?<= )$|(?<= )(?= )', r'\\', value)
 
     def _format_enum(self, enum):
         try:
